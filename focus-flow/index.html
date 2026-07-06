@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus Flow</title>
+<style>
+:root {
+  --bg: #14161f;
+  --card: #1c1f2b;
+  --card-2: #22263380;
+  --text: #eef0f6;
+  --muted: #8b8fa3;
+  --border: #2b2f3f;
+
+  --work: #ff6b6b;
+  --short: #4ecdc4;
+  --long: #7c83fd;
+  --accent: var(--work);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background:
+    radial-gradient(circle at 20% -10%, #262b3d 0%, transparent 55%),
+    radial-gradient(circle at 100% 100%, #1c2333 0%, transparent 45%),
+    var(--bg);
+  color: var(--text);
+  display: flex;
+  justify-content: center;
+  padding: 32px 16px;
+}
+
+.app {
+  width: 100%;
+  max-width: 480px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: 22px;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.streak {
+  font-size: 14px;
+  color: var(--muted);
+  background: var(--card);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.timer-card,
+.tasks-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 6px;
+  background: #14161f;
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+}
+
+.mode-tab {
+  flex: 1;
+  padding: 8px 4px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.mode-tab.active {
+  background: var(--accent);
+  color: #14161f;
+}
+
+.ring-wrap {
+  position: relative;
+  width: 240px;
+  height: 240px;
+  margin: 0 auto 24px;
+}
+
+.ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 12;
+}
+
+.ring-progress {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 691.15;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.3s linear, stroke 0.3s ease;
+}
+
+.time-display {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+#timeText {
+  font-size: 48px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.session-label {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 180px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.btn {
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: transform 0.15s ease, opacity 0.15s ease, background 0.2s ease;
+}
+
+.btn:active {
+  transform: scale(0.96);
+}
+
+.btn.primary {
+  background: var(--accent);
+  color: #14161f;
+  padding: 14px 32px;
+  font-size: 15px;
+}
+
+.btn.secondary {
+  background: var(--card-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  width: 44px;
+  height: 44px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.btn.small {
+  padding: 10px 16px;
+  font-size: 13px;
+}
+
+.btn:hover {
+  opacity: 0.9;
+}
+
+.pomo-count {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.custom-time-btn {
+  display: block;
+  margin: 14px auto 0;
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.custom-time-btn:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.duration-panel {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: #14161f;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.duration-panel label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+#durationValue {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.duration-panel input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.tasks-card h2 {
+  margin: 0 0 14px;
+  font-size: 15px;
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.task-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.task-form input {
+  flex: 1;
+  background: #14161f;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+.task-form input:focus {
+  border-color: var(--accent);
+}
+
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.task-list:empty::after {
+  content: "No tasks yet — add one above.";
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 10px 10px 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.task-item:hover {
+  background: #14161f;
+}
+
+.task-item.active-task {
+  background: #14161f;
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.task-check {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: transparent;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.task-item.done .task-check {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #14161f;
+}
+
+.task-text {
+  flex: 1;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-item.done .task-text {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.task-delete {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, color 0.15s ease;
+  padding: 4px 6px;
+}
+
+.task-item:hover .task-delete {
+  opacity: 1;
+}
+
+.task-delete:hover {
+  color: var(--work);
+}
+
+.celebration {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -10%;
+  font-size: 24px;
+  animation: confetti-fall 1.4s ease-in forwards;
+  opacity: 0;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(0.6);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(110vh) rotate(360deg) scale(1);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 400px) {
+  .ring-wrap {
+    width: 200px;
+    height: 200px;
+  }
+
+  #timeText {
+    font-size: 40px;
+  }
+}
+</style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Focus Flow</h1>
+      <div class="streak" id="streak">🔥 0 day streak</div>
+    </header>
+
+    <main>
+      <section class="timer-card" id="timerCard">
+        <div class="mode-tabs">
+          <button class="mode-tab active" data-mode="work">Focus</button>
+          <button class="mode-tab" data-mode="short">Short Break</button>
+          <button class="mode-tab" data-mode="long">Long Break</button>
+        </div>
+
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 240 240">
+            <circle class="ring-bg" cx="120" cy="120" r="110"></circle>
+            <circle class="ring-progress" id="ringProgress" cx="120" cy="120" r="110"></circle>
+          </svg>
+          <div class="time-display">
+            <span id="timeText">25:00</span>
+            <span class="session-label" id="sessionLabel">Focus Session</span>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button id="resetBtn" class="btn secondary" title="Reset">⟲</button>
+          <button id="startBtn" class="btn primary">Start</button>
+          <button id="skipBtn" class="btn secondary" title="Skip">⏭</button>
+        </div>
+
+        <div class="pomo-count" id="pomoCount">0 sessions completed today</div>
+
+        <button id="customTimeBtn" class="custom-time-btn" type="button">⏱ Choose your time</button>
+        <div class="duration-panel" id="durationPanel" hidden>
+          <label for="durationSlider">Focus duration: <span id="durationValue">25 min</span></label>
+          <input type="range" id="durationSlider" min="5" max="90" step="5" value="25">
+        </div>
+      </section>
+
+      <section class="tasks-card">
+        <h2>Tasks</h2>
+        <form id="taskForm" class="task-form">
+          <input type="text" id="taskInput" placeholder="What are you working on?" autocomplete="off">
+          <button type="submit" class="btn primary small">Add</button>
+        </form>
+        <ul id="taskList" class="task-list"></ul>
+      </section>
+    </main>
+  </div>
+
+  <div class="celebration" id="celebration"></div>
+
+  <script>
+(() => {
+  const STORAGE_KEY = "focusFlowState";
+  const RING_CIRCUMFERENCE = 2 * Math.PI * 110;
+
+  const DURATIONS = {
+    work: 25 * 60,
+    short: 5 * 60,
+    long: 15 * 60,
+  };
+
+  const MODE_LABELS = {
+    work: "Focus Session",
+    short: "Short Break",
+    long: "Long Break",
+  };
+
+  const CONFETTI_EMOJI = ["🎉", "✨", "🔥", "🍅", "⭐"];
+
+  function todayStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function yesterdayStr() {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function defaultState() {
+    return {
+      mode: "work",
+      timeRemaining: DURATIONS.work,
+      workDuration: DURATIONS.work,
+      isRunning: false,
+      workSessionsCompletedTotal: 0,
+      sessionsCompletedToday: 0,
+      lastSessionDate: null,
+      streakCount: 0,
+      lastCompletionDate: null,
+      tasks: [],
+      activeTaskId: null,
+    };
+  }
+
+  function loadState() {
+    let saved;
+    try {
+      saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    } catch {
+      saved = null;
+    }
+    const state = Object.assign(defaultState(), saved || {});
+
+    // Reset daily session count if it's a new day.
+    if (state.lastSessionDate !== todayStr()) {
+      state.sessionsCompletedToday = 0;
+    }
+
+    // Reset streak if the last completion wasn't today or yesterday.
+    if (
+      state.lastCompletionDate !== todayStr() &&
+      state.lastCompletionDate !== yesterdayStr()
+    ) {
+      state.streakCount = 0;
+    }
+
+    // Never resume a running timer across a reload; keep remaining time.
+    state.isRunning = false;
+
+    return state;
+  }
+
+  let state = loadState();
+  let intervalId = null;
+
+  function getDuration(mode) {
+    return mode === "work" ? state.workDuration : DURATIONS[mode];
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  // --- DOM refs ---
+  const timeText = document.getElementById("timeText");
+  const sessionLabel = document.getElementById("sessionLabel");
+  const ringProgress = document.getElementById("ringProgress");
+  const startBtn = document.getElementById("startBtn");
+  const resetBtn = document.getElementById("resetBtn");
+  const skipBtn = document.getElementById("skipBtn");
+  const pomoCount = document.getElementById("pomoCount");
+  const streakEl = document.getElementById("streak");
+  const modeTabs = document.querySelectorAll(".mode-tab");
+  const taskForm = document.getElementById("taskForm");
+  const taskInput = document.getElementById("taskInput");
+  const taskList = document.getElementById("taskList");
+  const celebration = document.getElementById("celebration");
+  const customTimeBtn = document.getElementById("customTimeBtn");
+  const durationPanel = document.getElementById("durationPanel");
+  const durationSlider = document.getElementById("durationSlider");
+  const durationValue = document.getElementById("durationValue");
+
+  ringProgress.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
+
+  function formatTime(totalSeconds) {
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+
+  function activeTaskText() {
+    const task = state.tasks.find((t) => t.id === state.activeTaskId);
+    return task ? task.text : null;
+  }
+
+  function renderTimer() {
+    timeText.textContent = formatTime(state.timeRemaining);
+
+    const label = MODE_LABELS[state.mode];
+    const taskText = state.mode === "work" ? activeTaskText() : null;
+    sessionLabel.textContent = taskText ? `${label} — ${taskText}` : label;
+
+    const total = getDuration(state.mode);
+    const fraction = state.timeRemaining / total;
+    ringProgress.style.strokeDashoffset = `${RING_CIRCUMFERENCE * (1 - fraction)}`;
+
+    document.documentElement.style.setProperty(
+      "--accent",
+      `var(--${state.mode})`
+    );
+
+    modeTabs.forEach((tab) => {
+      tab.classList.toggle("active", tab.dataset.mode === state.mode);
+    });
+
+    startBtn.textContent = state.isRunning ? "Pause" : "Start";
+    pomoCount.textContent = `${state.sessionsCompletedToday} session${
+      state.sessionsCompletedToday === 1 ? "" : "s"
+    } completed today`;
+    streakEl.textContent = `🔥 ${state.streakCount} day streak`;
+  }
+
+  function renderTasks() {
+    taskList.innerHTML = "";
+    state.tasks.forEach((task) => {
+      const li = document.createElement("li");
+      li.className = "task-item";
+      if (task.done) li.classList.add("done");
+      if (task.id === state.activeTaskId) li.classList.add("active-task");
+
+      const check = document.createElement("span");
+      check.className = "task-check";
+      check.textContent = "✓";
+
+      const text = document.createElement("span");
+      text.className = "task-text";
+      text.textContent = task.text;
+
+      const del = document.createElement("button");
+      del.className = "task-delete";
+      del.textContent = "✕";
+      del.type = "button";
+
+      li.append(check, text, del);
+      taskList.appendChild(li);
+
+      check.addEventListener("click", (e) => {
+        e.stopPropagation();
+        task.done = !task.done;
+        saveState();
+        renderTasks();
+      });
+
+      del.addEventListener("click", (e) => {
+        e.stopPropagation();
+        state.tasks = state.tasks.filter((t) => t.id !== task.id);
+        if (state.activeTaskId === task.id) state.activeTaskId = null;
+        saveState();
+        renderTasks();
+        renderTimer();
+      });
+
+      li.addEventListener("click", () => {
+        state.activeTaskId = task.id === state.activeTaskId ? null : task.id;
+        saveState();
+        renderTasks();
+        renderTimer();
+      });
+    });
+  }
+
+  function setMode(mode, { resetTime = true } = {}) {
+    state.mode = mode;
+    if (resetTime) state.timeRemaining = getDuration(mode);
+    renderTimer();
+    saveState();
+  }
+
+  function tick() {
+    state.timeRemaining -= 1;
+    if (state.timeRemaining <= 0) {
+      completeSession();
+      return;
+    }
+    renderTimer();
+    saveState();
+  }
+
+  function startTimer() {
+    if (state.isRunning) return;
+    state.isRunning = true;
+    intervalId = setInterval(tick, 1000);
+    renderTimer();
+    saveState();
+  }
+
+  function pauseTimer() {
+    state.isRunning = false;
+    clearInterval(intervalId);
+    renderTimer();
+    saveState();
+  }
+
+  function resetTimer() {
+    pauseTimer();
+    state.timeRemaining = getDuration(state.mode);
+    renderTimer();
+    saveState();
+  }
+
+  function nextModeAfterWork(sessionNumber) {
+    return sessionNumber % 4 === 0 ? "long" : "short";
+  }
+
+  function completeSession() {
+    pauseTimer();
+    state.timeRemaining = 0;
+    renderTimer();
+
+    if (state.mode === "work") {
+      state.workSessionsCompletedTotal += 1;
+      state.sessionsCompletedToday += 1;
+      state.lastSessionDate = todayStr();
+
+      if (state.lastCompletionDate !== todayStr()) {
+        state.streakCount =
+          state.lastCompletionDate === yesterdayStr()
+            ? state.streakCount + 1
+            : 1;
+        state.lastCompletionDate = todayStr();
+      }
+
+      launchCelebration();
+      setMode(nextModeAfterWork(state.workSessionsCompletedTotal));
+    } else {
+      setMode("work");
+    }
+
+    saveState();
+  }
+
+  function skipSession() {
+    pauseTimer();
+    if (state.mode === "work") {
+      setMode(nextModeAfterWork(state.workSessionsCompletedTotal + 1));
+    } else {
+      setMode("work");
+    }
+  }
+
+  function launchCelebration() {
+    const pieceCount = 24;
+    for (let i = 0; i < pieceCount; i++) {
+      const piece = document.createElement("span");
+      piece.className = "confetti-piece";
+      piece.textContent =
+        CONFETTI_EMOJI[Math.floor(Math.random() * CONFETTI_EMOJI.length)];
+      piece.style.left = `${Math.random() * 100}%`;
+      piece.style.animationDelay = `${Math.random() * 0.4}s`;
+      piece.style.animationDuration = `${1.1 + Math.random() * 0.6}s`;
+      celebration.appendChild(piece);
+      piece.addEventListener("animationend", () => piece.remove());
+    }
+  }
+
+  // --- Event wiring ---
+  startBtn.addEventListener("click", () => {
+    state.isRunning ? pauseTimer() : startTimer();
+  });
+
+  resetBtn.addEventListener("click", resetTimer);
+  skipBtn.addEventListener("click", skipSession);
+
+  modeTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      if (tab.dataset.mode === state.mode) return;
+      pauseTimer();
+      setMode(tab.dataset.mode);
+    });
+  });
+
+  customTimeBtn.addEventListener("click", () => {
+    durationPanel.hidden = !durationPanel.hidden;
+  });
+
+  durationSlider.addEventListener("input", () => {
+    const minutes = Number(durationSlider.value);
+    durationValue.textContent = `${minutes} min`;
+    state.workDuration = minutes * 60;
+    if (state.mode === "work" && !state.isRunning) {
+      state.timeRemaining = state.workDuration;
+    }
+    saveState();
+    renderTimer();
+  });
+
+  taskForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const text = taskInput.value.trim();
+    if (!text) return;
+    state.tasks.push({ id: Date.now(), text, done: false });
+    taskInput.value = "";
+    saveState();
+    renderTasks();
+  });
+
+  // --- Init ---
+  durationSlider.value = Math.round(state.workDuration / 60);
+  durationValue.textContent = `${Math.round(state.workDuration / 60)} min`;
+  renderTimer();
+  renderTasks();
+})();
+</script>
+</body>
+</html>

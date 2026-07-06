@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "focus-flow",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["-y", "serve", "focus-flow", "-l", "5310"],
+      "port": 5310
+    }
+  ]
+}
